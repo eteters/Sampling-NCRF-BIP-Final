@@ -1,0 +1,6 @@
+scipy
+pillow
+scikit-image==0.16.2
+openslide-python
+matplotlib
+tensorboardX

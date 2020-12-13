@@ -1,0 +1,4 @@
+python wsi/bin/tissue_mask.py /media/D51E-B4AD/WSI\ images/tumor_001.tif evan_results/masks/tumor_001.npy
+
+python wsi/bin/probs_map.py /media/D51E-B4AD/WSI\ images/tumor_001.tif ckpt/resnet18_crf.ckpt configs/resnet18_crf.json evan_results/masks/tumor_001.npy evan_results/probs_masks/tumor_001.npy
+

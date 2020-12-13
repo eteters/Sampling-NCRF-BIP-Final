@@ -1,0 +1,49 @@
+Notes
+
+We may need to use the newZoomResult[newZoomResult > 0.50] or some threshold as a new mask. This mask can be used the same way we do right now! Each coordinate of a prediction is treated as a center pixel of a new investigation, at a new zoom level. Do we need to get a new mask at the appropriate level? ie
+0 -> 6
+1 -> 7
+2 -> 8
+3 -> 9
+4 -> 10 -> Max possible zoom, tiny little mask 
+
+python wsi/bin/probs_map.py /media/D51E-B4AD/WSI\ images/test_001.tif ckpt/resnet18_crf.ckpt configs/resnet18_crf.json evan_results/masks/test_001_lvl8.npy evan_results/probs_masks/test_001_lvl2v8.npy
+
+Delete asaps' build
+remake it and run cmake with Two install prfeixs and install destination for easy life
+
+-DPYTHON_INCLUDE_DIR=$(/storage/hpc/data/ejt8tc/miniconda/envs/bip_env3/bin/python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")  \
+-DPYTHON_LIBRARY=$(/storage/hpc/data/ejt8tc/miniconda/envs/bip_env3/bin/python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+
+ cmake .. -DCMAKE_PREFIX_PATH='/home/ejt8tc/data/install_pugi/' -DCMAKE_INSTALL_PREFIX=../../ASAP_install -DPYTHON_INCLUDE_DIR=$(/storage/hpc/data/ejt8tc/miniconda/envs/bip_env3/bin/python -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")  -DPYTHON_LIBRARY=$(/storage/hpc/data/ejt8tc/miniconda/envs/bip_env3/bin/python -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+
+Test 001 385.3933 seconds 28
+Test 001 1481.3555 seconds 17
+Test 001 6877.5906 seconds 06
+
+Dynamic 1: 873.9231 seconds
+
+1) ncurses/ncurses-6.0                          25) gettext/gettext-0.19.8.1
+  2) zlib/zlib-1.2.11                             26) glib/glib-2.56.0-python-2.7.14
+  3) openssl/openssl-1.0.2n                       27) libpng/libpng-1.6.34
+  4) pcre/pcre-8.41                               28) freetype/freetype-2.7.1
+  5) readline/readline-7.0                        29) libjpeg-turbo/libjpeg-turbo-1.5.3
+  6) gdbm/gdbm-1.14.1                             30) libtiff/libtiff-4.0.8
+  7) perl/perl-5.26.2                             31) font-util/font-util-1.3.1
+  8) libffi/libffi-3.2.1                          32) fontconfig/fontconfig-2.12.3
+  9) bzip2/bzip2-1.0.6                            33) lcms/lcms-2.8
+ 10) sqlite/sqlite-3.22.0                         34) libmng/libmng-2.0.3
+ 11) tcl/tcl-8.6.8                                35) icu4c/icu4c-60.1
+ 12) kbproto/kbproto-1.0.7                        36) qt/qt-5.9.3-python-2.7.14
+ 13) xextproto/xextproto-7.3.0                    37) jasper/jasper-1.900.1-intel
+ 14) libxdmcp/libxdmcp-1.1.2                      38) gmp/gmp-6.1.2-gcc-10.1.0
+ 15) xproto/xproto-7.0.31                         39) mpfr/mpfr-4.0.2-gcc-10.1.0
+ 16) libxau/libxau-1.0.8                          40) mpc/mpc-1.1.0-gcc-10.1.0
+ 17) libpthread-stubs/libpthread-stubs-0.4        41) isl/isl-0.21-gcc-10.1.0
+ 18) libxcb/libxcb-1.13                           42) zstd/zstd-1.4.5-gcc-10.1.0
+ 19) libx11/libx11-1.6.5                          43) cuda/cuda-8.0.61-gcc-10.1.0
+ 20) tk/tk-8.6.8                                  44) gcc/gcc-10.1.0-gcc-10.1.0-cuda-8.0.61-nvptx
+ 21) python/python-2.7.14                         45) openjpeg/openjpeg-2.3.0
+ 22) xz/xz-5.2.3                                  46) openslide/openslide-3.4.1
+ 23) libxml2/libxml2-2.9.4                        47) boost/boost-1.55.0
+ 24) tar/tar-1.30                                 48) cmake/cmake-3.11.1
