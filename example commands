@@ -1,4 +1,13 @@
-python wsi/bin/tissue_mask.py /media/D51E-B4AD/WSI\ images/tumor_001.tif evan_results/masks/tumor_001.npy
+python wsi/bin/probs_map.py /media/D51E-B4AD/WSI\ images/test_001.tif ckpt/resnet18_crf.ckpt configs/resnet18_crf.json /home/xavier1/evan_stuff/NCRF-master/evan_results/debug/test_001_dynamic4.png evan_results/probs_masks/test_001_dynamic4.npy
 
-python wsi/bin/probs_map.py /media/D51E-B4AD/WSI\ images/tumor_001.tif ckpt/resnet18_crf.ckpt configs/resnet18_crf.json evan_results/masks/tumor_001.npy evan_results/probs_masks/tumor_001.npy
 
+"/media/D51E-B4AD/WSI\ images/test_001.tif" - image tiff
+
+ckpt/resnet18_crf.ckpt 
+configs/resnet18_crf.json -  these two always the same 
+
+/home/xavier1/evan_stuff/NCRF-master/evan_results/debug/test_001_dynamic4.png - results filename for the debug visualization
+
+evan_results/probs_masks/test_001_dynamic4.npy - results filename for the probability map
+
+Will still need to run nms and evaluation_FROC on the .npy afterwards!
