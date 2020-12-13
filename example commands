@@ -11,3 +11,8 @@ configs/resnet18_crf.json -  these two always the same
 evan_results/probs_masks/test_001_dynamic4.npy - results filename for the probability map
 
 Will still need to run nms and evaluation_FROC on the .npy afterwards!
+
+
+## Note!!
+At the top of probs_map.py is the 
+level_to_mask_threshold dictionary. Change these (mostly the bottom two) to change the threshold values we use 
