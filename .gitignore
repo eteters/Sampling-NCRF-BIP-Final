@@ -1,5 +1,6 @@
 #Images & results
 *.tiff
+*.tif
 *.png
 *.npy
 *.csv
