@@ -179,7 +179,7 @@ def computeFROC(FROC_data):
     total_FPs.append(0)
     total_TPs.append(0)
     total_FPs = np.asarray(total_FPs)/float(len(FROC_data[0]))
-    total_sensitivity = np.asarray(total_TPs)/float(sum(FROC_data[3]))      
+    total_sensitivity = np.asarray(total_TPs)/float(sum(FROC_data[3]))
     return  total_FPs, total_sensitivity
    
    
@@ -222,6 +222,8 @@ if __name__ == "__main__":
     ground_truth_test += [each[0:8] for each in os.listdir(mask_folder) if each.endswith('.tif')]
     ground_truth_test = set(ground_truth_test)
 
+    print("ground_truth_test", ground_truth_test)
+    print("result_file_list", result_file_list)
     caseNum = 0    
     for case in result_file_list:
         print('Evaluating Performance on image:', case[0:-4])
@@ -231,6 +233,7 @@ if __name__ == "__main__":
                 
         is_tumor = case[0:-4] in ground_truth_test
         if (is_tumor):
+            print("YEAH TUMOR")
             maskDIR = os.path.join(mask_folder, case[0:-4]) + '.tif'
             evaluation_mask = computeEvaluationMask(maskDIR, L0_RESOLUTION, EVALUATION_MASK_LEVEL)
             ITC_labels = computeITCList(evaluation_mask, L0_RESOLUTION, EVALUATION_MASK_LEVEL)
@@ -244,7 +247,7 @@ if __name__ == "__main__":
         detection_summary[0][caseNum] = case
         FROC_data[1][caseNum], FROC_data[2][caseNum], FROC_data[3][caseNum], detection_summary[1][caseNum], FP_summary[1][caseNum] = compute_FP_TP_Probs(Ycorr, Xcorr, Probs, is_tumor, evaluation_mask, ITC_labels, EVALUATION_MASK_LEVEL)
         caseNum += 1
-    
+    print("FROC_DATA:::->", FROC_data)
     # Compute FROC curve 
     total_FPs, total_sensitivity = computeFROC(FROC_data)
     
