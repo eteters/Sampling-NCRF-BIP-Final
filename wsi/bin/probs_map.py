@@ -24,20 +24,13 @@ import matplotlib.pyplot as plt
 import openslide
 import matplotlib.patches as patches
 
-level_to_plot_color = {
-    0:"r",
-    1:"orange",
-    2:"g",   
-    3:"b" # shouldn't get any more zoomed out than this right?
-}
-
 # threshold applied AFTER the specified level
 level_to_mask_threshold = {
     4: 0.01,
     3: 0.01,
     2: 0.01,
     1: 0.01, 
-    0: 0.01 
+    0: 0.015 
 }
 
 parser = argparse.ArgumentParser(description='Get the probability map of tumor'
@@ -66,15 +59,21 @@ parser.add_argument('--eight_avg', default=0, type=int, help='if using average'
                     ' default 0, which means disabled')
 
 #things that could be arguments if I wasnt lazy
-# DEBUG_IMAGE_PATH = "/home/xavier1/evan_stuff/NCRF-master/evan_results/debug/test_001_scale06.png"
 DEBUG = True
 # SKIP_MODEL = False
+
+def threshholdMask(prevMask, currentLevel):
+    newMask = np.zeros(prevMask.shape)
+    thresh = level_to_mask_threshold[currentLevel]
+    newMask[prevMask > thresh] = 1.0
+    return newMask
 
 # disclaimer: Not actually recursive but hey it could be
 def recursive_probs_map(args, cfg, model, init_level):
     currentLevel = init_level
     previousMask = None
     firstTime = True
+    allDebugInfo = []
     while (currentLevel != 0):
         # This will be the same size as the current mask so in the next image the spacing of 
         # searches will be close together if the probabilties are dense. Could change this up 
@@ -83,9 +82,7 @@ def recursive_probs_map(args, cfg, model, init_level):
         dataloader = None
         if (not firstTime):
             # newMask = np.zeros_like(previousMask)
-            newMask = np.zeros(previousMask.shape)
-            thresh = level_to_mask_threshold[currentLevel]
-            newMask[previousMask > thresh] = 1.0
+            newMask = threshholdMask(previousMask, currentLevel)
             # newMask = torch.where(previousMask > 0.5, 1., 0.)
             dataloader = make_dataloader(
                 args, cfg, level=currentLevel, mask=newMask,
@@ -95,23 +92,34 @@ def recursive_probs_map(args, cfg, model, init_level):
                 args, cfg, level=currentLevel, mask=None,
                 flip='NONE', rotate='NONE' )
         print("entering get_probs_map for currentLevel =", currentLevel)
-        previousMask = get_probs_map(model, dataloader, currentLevel, args.debug_path, firstTime)
+        previousMask, debugInfo = get_probs_map(model, dataloader)
+        allDebugInfo = allDebugInfo + debugInfo
         print("prevmask shape:", previousMask.shape)
         currentLevel = currentLevel - 1
         firstTime = False
 
 
-    newMask = np.zeros(previousMask.shape)
-    thresh = level_to_mask_threshold[currentLevel]
-    newMask[previousMask > thresh] = 1.0
+    newMask = threshholdMask(previousMask, currentLevel)
     # ie the final one is zero since the while loop exited,
     # I'll think of a better code pattern sometime
     dataloader = make_dataloader(
                 args, cfg, level=currentLevel, mask=newMask,
                 flip='NONE', rotate='NONE')
-    return get_probs_map(model, dataloader, currentLevel, args.debug_path, firstTime)
+    probs_map, debugInfo = get_probs_map(model, dataloader)
 
-def get_probs_map(model, dataloader, level, debug_path, firstTime):
+    allDebugInfo = allDebugInfo + debugInfo
+    if(DEBUG):
+        plotAreasSearched(
+            dataloader.dataset._wsi_path,
+            (dataloader.dataset.X_mask, dataloader.dataset.Y_mask) ,
+            allDebugInfo,
+            args.debug_path,
+            currentLevel
+        )
+
+    return
+
+def get_probs_map(model, dataloader):
     probs_map = np.zeros(dataloader.dataset._mask.shape)
     num_batch = len(dataloader)
     # only use the prediction of the center patch within the grid
@@ -151,31 +159,17 @@ def get_probs_map(model, dataloader, level, debug_path, firstTime):
             .format(
                 time.strftime("%Y-%m-%d %H:%M:%S"), dataloader.dataset._flip,
                 dataloader.dataset._rotate, count, num_batch, time_spent))
-        # break
+        # if count == 3:
+        #     break    
 
-    if(DEBUG):
-        plotAreasSearched(
-            dataloader.dataset._wsi_path,
-            (dataloader.dataset.X_mask, dataloader.dataset.Y_mask) ,
-            allDebugInfo,
-            debug_path,
-            level,
-            firstTime
-        )
-        
+    return probs_map, allDebugInfo
 
-    return probs_map
-
-def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, level, firstTime=False):
-    plotColor = level_to_plot_color[level]
-
+def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, level):
     fig,ax = plt.subplots(1)
     downsampled_image = None
-    if firstTime:
-        slide = openslide.OpenSlide(wsi_path)
-        downsampled_image = np.asarray( slide.get_thumbnail(size=mask_shape) )
-    else:
-        downsampled_image = plt.imread(debug_image_path)
+    
+    slide = openslide.OpenSlide(wsi_path)
+    downsampled_image = np.asarray( slide.get_thumbnail(size=mask_shape) )
 
     ax.imshow(downsampled_image)
     plt.axis('off')
@@ -183,13 +177,15 @@ def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, lev
         print("Rectangle ", infoNum)
         # Display the image
         #because of the 20 batches, there are 19 more down the y axis of each side that I chose to ignore
+        # for x, y in zip(debugInfo["corner"][0], debugInfo["corner"][1] ):
         x, y = (debugInfo["corner"][0][0] , debugInfo["corner"][1][0] )
         heightAndWidth = int(debugInfo["hw"][0]) 
+        plotColor = debugInfo["color"][0]
         if(infoNum == 0):
             print("x,y:", x, y)
             print("h/w:", heightAndWidth)
 
-        rect = patches.Rectangle((x,y), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
+        rect = patches.Rectangle((x ,y ), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
         ax.add_patch(rect)
 
     fig.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, 
@@ -198,7 +194,7 @@ def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, lev
     fig.gca().xaxis.set_major_locator(plt.NullLocator())
     fig.gca().yaxis.set_major_locator(plt.NullLocator())
     fig.savefig(debug_image_path, format='png', bbox_inches = 'tight',
-            pad_inches = 0)
+            pad_inches = 0, dpi=136.6)
     plt.close()
 
 def make_dataloader(args, cfg, level, mask=None, flip='NONE', rotate='NONE'):

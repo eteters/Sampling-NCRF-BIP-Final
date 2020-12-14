@@ -18,6 +18,13 @@ level_to_mask_level = {
     0: 6 
 }
 
+level_to_plot_color = {
+    0:"r",
+    1:"orange",
+    2:"g",   
+    3:"b" # shouldn't get any more zoomed out than this right?
+}
+
 class GridWSIPatchDataset(Dataset):
     """
     Data producer that generate all the square grids, e.g. 3x3, of patches,
@@ -163,7 +170,8 @@ class GridWSIPatchDataset(Dataset):
         # a bunch of parallel stuff 
         debugInfo = {
         "corner": (x / self._resolution ,y / self._resolution),
-        "hw": self._image_size / self._resolution
+        "hw": self._image_size / self._resolution,
+        "color": level_to_plot_color[self.level]
         }
 
         return (img_flat, x_mask, y_mask, debugInfo)
