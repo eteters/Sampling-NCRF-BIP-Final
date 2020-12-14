@@ -19,10 +19,10 @@ level_to_mask_level = {
 }
 
 level_to_plot_color = {
-    0:"r",
-    1:"orange",
-    2:"g",   
-    3:"b" # shouldn't get any more zoomed out than this right?
+    0:"orange",
+    1:"g",
+    2:"b",   
+    3:"purple" # shouldn't get any more zoomed out than this right?
 }
 
 class GridWSIPatchDataset(Dataset):

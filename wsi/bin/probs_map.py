@@ -108,16 +108,21 @@ def recursive_probs_map(args, cfg, model, init_level):
     probs_map, debugInfo = get_probs_map(model, dataloader)
 
     allDebugInfo = allDebugInfo + debugInfo
+
+    #np.asarray([np.array([140.0,140.0]), np.array([30.0,30.0])])
+    good_points = np.where(probs_map > 0.9)
+
     if(DEBUG):
         plotAreasSearched(
             dataloader.dataset._wsi_path,
             (dataloader.dataset.X_mask, dataloader.dataset.Y_mask) ,
             allDebugInfo,
             args.debug_path,
-            currentLevel
+            currentLevel,
+            good_points
         )
 
-    return
+    return probs_map
 
 def get_probs_map(model, dataloader):
     probs_map = np.zeros(dataloader.dataset._mask.shape)
@@ -164,7 +169,7 @@ def get_probs_map(model, dataloader):
 
     return probs_map, allDebugInfo
 
-def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, level):
+def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, level, good_points):
     fig,ax = plt.subplots(1)
     downsampled_image = None
     
@@ -185,8 +190,12 @@ def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, lev
             print("x,y:", x, y)
             print("h/w:", heightAndWidth)
 
-        rect = patches.Rectangle((x ,y ), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
+        rect = patches.Rectangle((x ,y), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
         ax.add_patch(rect)
+
+    for x, y in zip(good_points[0], good_points[1]):
+        # print(point)
+        ax.scatter(x, y, c="red")
 
     fig.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, 
             hspace = 0, wspace = 0)
