@@ -23,6 +23,22 @@ Test 001 6877.5906 seconds 06
 
 Dynamic 1: 873.9231 seconds
 
+add groundturth vis  
+Check false negative regions 
+Poly to roi, roi to poly 
+Just do binary evaluation 
+Visually see how much overlap between resolutions
+False pos and negative 
+Precision recall and F1 on the detection
+We dont want to know how many you got right, but want to know accurate the segmentation 
+Compare to running the whole mechanism at whatever 
+Better visualization at intermediate f
+More details and how they did 
+Know the network we are using without using the paper 
+How much we lose? 
+How it works for this dataset ?
+
+
 1) ncurses/ncurses-6.0                          25) gettext/gettext-0.19.8.1
   2) zlib/zlib-1.2.11                             26) glib/glib-2.56.0-python-2.7.14
   3) openssl/openssl-1.0.2n                       27) libpng/libpng-1.6.34

@@ -23,6 +23,8 @@ import torch.multiprocessing
 import matplotlib.pyplot as plt
 import openslide
 import matplotlib.patches as patches
+import csv
+
 
 # threshold applied AFTER the specified level
 level_to_mask_threshold = {
@@ -107,8 +109,6 @@ def recursive_probs_map(args, cfg, model, init_level):
                 flip='NONE', rotate='NONE')
     probs_map, debugInfo = get_probs_map(model, dataloader)
 
-    allDebugInfo = allDebugInfo + debugInfo
-
     #np.asarray([np.array([140.0,140.0]), np.array([30.0,30.0])])
     good_points = np.where(probs_map > 0.9)
 
@@ -118,8 +118,8 @@ def recursive_probs_map(args, cfg, model, init_level):
             (dataloader.dataset.X_mask, dataloader.dataset.Y_mask) ,
             allDebugInfo,
             args.debug_path,
-            currentLevel,
-            good_points
+            good_points,
+            dataloader.dataset._resolution
         )
 
     return probs_map
@@ -164,12 +164,12 @@ def get_probs_map(model, dataloader):
             .format(
                 time.strftime("%Y-%m-%d %H:%M:%S"), dataloader.dataset._flip,
                 dataloader.dataset._rotate, count, num_batch, time_spent))
-        # if count == 3:
+        # if count == 4:
         #     break    
 
     return probs_map, allDebugInfo
 
-def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, level, good_points):
+def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, good_points, resolution):
     fig,ax = plt.subplots(1)
     downsampled_image = None
     
@@ -184,18 +184,18 @@ def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, lev
         #because of the 20 batches, there are 19 more down the y axis of each side that I chose to ignore
         # for x, y in zip(debugInfo["corner"][0], debugInfo["corner"][1] ):
         x, y = (debugInfo["corner"][0][0] , debugInfo["corner"][1][0] )
-        heightAndWidth = int(debugInfo["hw"][0]) 
+        heightAndWidth = int(debugInfo["hw"][0]) # / resolution
         plotColor = debugInfo["color"][0]
-        if(infoNum == 0):
-            print("x,y:", x, y)
-            print("h/w:", heightAndWidth)
-
-        rect = patches.Rectangle((x ,y), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
+        # if(infoNum == 0):
+            # print("x,y:", x, y) these are wrong rn because resolution 
+            # print("h/w:", heightAndWidth)
+        # todo add resolution here maybe
+        rect = patches.Rectangle((x, y), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
         ax.add_patch(rect)
 
     for x, y in zip(good_points[0], good_points[1]):
         # print(point)
-        ax.scatter(x, y, c="red")
+        ax.scatter(x, y, c="red", zorder=10)
 
     fig.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, 
             hspace = 0, wspace = 0)
@@ -270,7 +270,21 @@ def run(args):
         timer.start("get_probs_map ")
         # probs_map = get_probs_map(model, dataloader)
         probs_map = recursive_probs_map(args, cfg, model, init_level)
-        timer.stop()
+        runtime = timer.stop()
+
+        with open(r'thresholds_and_times.csv', 'a') as csvfile:
+            fieldnames = ['time','thresh0', 'thresh1', 'thresh2', 'thresh3', 'thresh4', 'input_args']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            # TODO add type of test? Normal or tumor?
+            writer.writerow({
+                'time':runtime,
+                'thresh0':level_to_mask_threshold[0],
+                'thresh1': level_to_mask_threshold[1],
+                'thresh2': level_to_mask_threshold[2],
+                'thresh3': level_to_mask_threshold[3],
+                'thresh4': level_to_mask_threshold[4], 
+                'input_args': ' '.join(sys.argv[1:] )
+                })
     else:
         probs_map = np.zeros(mask.shape)
 

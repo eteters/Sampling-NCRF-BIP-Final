@@ -7,6 +7,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from matplotlib import image
 from wsi.bin.tissue_mask import getTissueMask
+import math
 
 np.random.seed(0)
 
@@ -72,7 +73,19 @@ class GridWSIPatchDataset(Dataset):
         print("level in is ", self.level)
         maskLevel = level_to_mask_level[self.level]
         if self._mask is None:
+            self.isFirst = True # todo might need this 
             self._mask = getTissueMask(self._wsi_path, maskLevel) # again with the tuple!
+       # TODO else block for bumping dimensions
+        # else: 
+        #     self.isFirst = False 
+        #     #Gotta bump up the dimensions!
+        #     x_mask, y_mask = self._mask.shape
+        #     tempMask = np.zeros((x_mask * 2, y_mask * 2))
+        #     temp_X, temp_Y = np.where(self._mask)  
+        #     print("temp_X, temp_Y: ", temp_X, temp_Y) 
+        #     for x, y in zip(temp_X , temp_Y ):
+        #         tempMask[x * 2,y * 2] = 1 
+        #     self._mask = tempMask
         
         self._slide = openslide.OpenSlide(self._wsi_path)
         # Tissue mask default is 6 so these two should be pretty different
@@ -108,15 +121,72 @@ class GridWSIPatchDataset(Dataset):
 
 
     def __len__(self):
-        return int(self._idcs_num/self.skip)
+        # TODO comments for breaking into 4 
+        # if self.isFirst:
+        return int(self._idcs_num)    
+        # else:
+        #     return int(self._idcs_num) * 4
 
     def __getitem__(self, idx):
-        x_mask, y_mask = self._X_idcs[idx*self.skip], self._Y_idcs[idx*self.skip]
+        x_mask = None
+        y_mask = None
+
+        # if self.isFirst:
+        x_mask, y_mask = self._X_idcs[idx], self._Y_idcs[idx]
+        # else:
+            # x_mask, y_mask = self._X_idcs[math.floor(idx / 4)], self._Y_idcs[math.floor(idx / 4)]
+        
+        # print("x and y mask indices retreived: ", x_mask, y_mask)
+        # if not self.isFirst:
+        #     shifter = 4
+        #     # top left
+        #     if (idx % 4) == 0:
+        #         x_mask = x_mask - shifter
+        #         y_mask = y_mask - shifter
+        #     #bot left 
+        #     if (idx % 4) == 1:
+        #         x_mask = x_mask - shifter
+        #         y_mask = y_mask + shifter
+        #     # top right 
+        #     if (idx % 4) == 2:
+        #         x_mask = x_mask + shifter
+        #         y_mask = y_mask - shifter
+        #     # bot right 
+        #     if (idx % 4) == 3:
+        #         x_mask = x_mask + shifter
+        #         y_mask = y_mask + shifter
 
         # here it is important that we multiply by resolution...
         # this gets us the equivalent point in the big point system
         x_center = int((x_mask + 0.5) * self._resolution)
         y_center = int((y_mask + 0.5) * self._resolution)
+
+
+        # TODO This comment block was for moving the quadrants to the right spot before I realize the resolution was a problem
+        # x = 0
+        # y = 0
+        # save_index = idx
+        
+        #top left 
+        # if (save_index % 4) == 0:
+        #     print("Zero!")
+        #     x = int(x_center - self._image_size)
+        #     y = int(y_center - self._image_size)
+        # #bot left
+        # elif (save_index % 4) == 1:
+        #     print("One!")
+        #     x = int(x_center - self._image_size)
+        #     y = int(y_center)
+        # #top right
+        # elif (save_index % 4) == 2:
+        #     print("Two!")
+        #     x = int(x_center)
+        #     y = int(y_center - self._image_size)
+        # #bot right
+        # elif (save_index % 4) == 3:
+        #     print("Three!")
+        #     x = int(x_center)
+        #     y = int(y_center)
 
         # This just gets the corner 
         x = int(x_center - self._image_size / 2)

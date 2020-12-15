@@ -28,9 +28,10 @@ def computeEvaluationMask(maskDIR, resolution, level):
         evaluation_mask
     """
     slide = openslide.open_slide(maskDIR)
-    dims = slide.level_dimensions[level]
+    # dims = slide.level_dimensions[level]
+    dims = (3056, 6912) # level 5
     pixelarray = np.zeros(dims[0]*dims[1], dtype='uint')
-    pixelarray = np.array(slide.read_region((0,0), level, dims))
+    pixelarray = np.array(slide.read_region((0,0), 0, dims)) # level changed to zero since we dont have the right tiuffs
     distance = nd.distance_transform_edt(255 - pixelarray[:,:,0])
     Threshold = 75/(resolution * pow(2, level) * 2) # 75µm is the equivalent size of 5 tumor cells
     binary = distance < Threshold
@@ -149,7 +150,7 @@ def compute_FP_TP_Probs(Ycorr, Xcorr, Probs, is_tumor, evaluation_mask, Isolated
             key = 'FP ' + str(FP_counter)
             FP_summary[key] = [Probs[i], Xcorr[i], Ycorr[i]] 
             FP_counter+=1
-            
+    print("isoalted tumor cells: ", len(Isolated_Tumor_Cells), "max_label", max_label)        
     num_of_tumors = max_label - len(Isolated_Tumor_Cells);                             
     return FP_probs, TP_probs, num_of_tumors, detection_summary, FP_summary
  
@@ -219,7 +220,7 @@ if __name__ == "__main__":
     detection_summary = np.zeros((2, len(result_file_list)), dtype=np.object)
     
     ground_truth_test = []
-    ground_truth_test += [each[0:8] for each in os.listdir(mask_folder) if each.endswith('.tif')]
+    ground_truth_test += [each[0:9] for each in os.listdir(mask_folder) if each.endswith('.tif')]
     ground_truth_test = set(ground_truth_test)
 
     print("ground_truth_test", ground_truth_test)
@@ -241,7 +242,8 @@ if __name__ == "__main__":
             evaluation_mask = 0
             ITC_labels = []
             
-           
+        print("evaluation mask!:::->", evaluation_mask)
+
         FROC_data[0][caseNum] = case
         FP_summary[0][caseNum] = case
         detection_summary[0][caseNum] = case
