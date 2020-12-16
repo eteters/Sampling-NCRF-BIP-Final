@@ -123,7 +123,7 @@ class GridWSIPatchDataset(Dataset):
     def __len__(self):
         # TODO comments for breaking into 4 
         # if self.isFirst:
-        return int(self._idcs_num)    
+        return int(self._idcs_num)
         # else:
         #     return int(self._idcs_num) * 4
 

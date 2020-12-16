@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import openslide
 import matplotlib.patches as patches
 import csv
+from matplotlib.collections import PatchCollection
 
 
 # threshold applied AFTER the specified level
@@ -108,7 +109,7 @@ def recursive_probs_map(args, cfg, model, init_level):
                 args, cfg, level=currentLevel, mask=newMask,
                 flip='NONE', rotate='NONE')
     probs_map, debugInfo = get_probs_map(model, dataloader)
-
+    allDebugInfo = allDebugInfo + debugInfo
     #np.asarray([np.array([140.0,140.0]), np.array([30.0,30.0])])
     good_points = np.where(probs_map > 0.9)
 
@@ -178,8 +179,10 @@ def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, goo
 
     ax.imshow(downsampled_image)
     plt.axis('off')
+    orangeArray = []
+    greenArray = []
+    print("Making debug visualization... ")
     for infoNum, debugInfo in enumerate(debugInfoList):
-        print("Rectangle ", infoNum)
         # Display the image
         #because of the 20 batches, there are 19 more down the y axis of each side that I chose to ignore
         # for x, y in zip(debugInfo["corner"][0], debugInfo["corner"][1] ):
@@ -190,8 +193,18 @@ def plotAreasSearched(wsi_path, mask_shape, debugInfoList, debug_image_path, goo
             # print("x,y:", x, y) these are wrong rn because resolution 
             # print("h/w:", heightAndWidth)
         # todo add resolution here maybe
-        rect = patches.Rectangle((x, y), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
-        ax.add_patch(rect)
+        rect = None
+        if plotColor=="orange":
+            rect = patches.Rectangle((x, y), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
+            orangeArray.append(rect)
+        else:
+            rect = patches.Rectangle((x, y), heightAndWidth, heightAndWidth,linewidth=1,edgecolor=plotColor,facecolor='none')
+            greenArray.append(rect)
+
+    greenCollection = PatchCollection(greenArray, zorder = 1, edgecolor="g", facecolor='none')
+    ax.add_collection(greenCollection)
+    orangeCollection = PatchCollection(orangeArray, zorder = 2, edgecolor="orange", facecolor='none')
+    ax.add_collection(orangeCollection)
 
     for x, y in zip(good_points[0], good_points[1]):
         # print(point)
@@ -238,7 +251,7 @@ def determineInitialLevel(wsi_path):
     print("Maximum level used is", maxLevel, "so initial zoom is ", init_level)
     slide.close()
 
-    return init_level
+    return 1
 
 def run(args):
     os.environ["CUDA_VISIBLE_DEVICES"] = args.GPU
